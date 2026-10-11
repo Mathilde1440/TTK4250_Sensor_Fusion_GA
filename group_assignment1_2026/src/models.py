@@ -243,10 +243,13 @@ class ModelIMU:
         """
         x_est_prev_nom = x_est_prev.nom
         x_est_prev_err = x_est_prev.err
-        Ad, GQGTd = None, None  # TODO
-        P_pred = np.eye(15)  # TODO
+        Ad, GQGTd = self.get_discrete_error_diff(x_est_prev_nom,z_corr, dt)
+        P_pred = Ad @x_est_prev_err.cov @Ad.T + GQGTd
+        xk_k1 = Ad@np.asarray(x_est_prev_err.mean)
+        pred_error_state = ErrorState(pos = xk_k1[:3], vel=xk_k1[3:6], avec= xk_k1[6:9], accm_bias=xk_k1[9:12], gyro_bias=xk_k1[12:15])
+        x_err_pred = MultiVarGauss[ErrorState](mean =pred_error_state,cov=P_pred)
 
         # TODO remove this
-        x_err_pred = models_solu.ModelIMU.predict_err(
-            self, x_est_prev, z_corr, dt)
+        # x_err_pred = models_solu.ModelIMU.predict_err(
+        #     self, x_est_prev, z_corr, dt)
         return x_err_pred
